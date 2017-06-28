@@ -750,6 +750,17 @@ track_view_action_exec (gpointer data,
       item = bst_item_view_get_current (item_view);
       track = Bse::TrackH::down_cast (bse_server.from_proxy (item));
       bse_item_group_undo (song.proxy_id(), "Delete Track");
+      SfiSeq *seq;
+      bse_proxy_get (track.proxy_id(), "outputs", &seq, NULL);
+      BseIt3mSeq *iseq = bse_it3m_seq_from_seq (seq);
+      if (iseq && iseq->n_items == 1)
+        {
+          // if we are the only track on a bus, automatically remove the bus, too
+          Bse::BusH bus = Bse::BusH::down_cast (bse_server.from_proxy (iseq->items[0]));
+          if (bus != song.get_master_bus())
+            song.remove_bus (bus);
+        }
+      bse_it3m_seq_free (iseq);
       Bse::PartSeq pseq = track.list_parts_uniq();
       song.remove_track (track);
       for (const auto &part : pseq)
