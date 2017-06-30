@@ -755,10 +755,19 @@ track_view_action_exec (gpointer data,
       BseIt3mSeq *iseq = bse_it3m_seq_from_seq (seq);
       if (iseq && iseq->n_items == 1)
         {
-          // if we are the only track on a bus, automatically remove the bus, too
+          // automatically remove output bus if
+          //  - we have only one output bus
+          //  - this bus doesn't have any other inputs
           Bse::BusH bus = Bse::BusH::down_cast (bse_server.from_proxy (iseq->items[0]));
-          if (bus != song.get_master_bus())
-            song.remove_bus (bus);
+          SfiSeq *bus_inputs_seq;
+          bse_proxy_get (bus.proxy_id(), "inputs", &bus_inputs_seq, nullptr);
+          BseIt3mSeq *bus_inputs_iseq = bse_it3m_seq_from_seq (bus_inputs_seq);
+          if (bus_inputs_iseq && bus_inputs_iseq->n_items == 1)
+            {
+              if (bus != song.get_master_bus())
+                song.remove_bus (bus);
+            }
+          bse_it3m_seq_free (bus_inputs_iseq);
         }
       bse_it3m_seq_free (iseq);
       Bse::PartSeq pseq = track.list_parts_uniq();
