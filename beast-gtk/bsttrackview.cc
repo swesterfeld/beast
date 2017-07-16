@@ -750,7 +750,7 @@ track_view_action_exec (gpointer data,
       item = bst_item_view_get_current (item_view);
       track = Bse::TrackH::down_cast (bse_server.from_proxy (item));
       bse_item_group_undo (song.proxy_id(), "Delete Track");
-      SfiSeq *seq;
+      SfiSeq *seq = nullptr;
       bse_proxy_get (track.proxy_id(), "outputs", &seq, NULL);
       BseIt3mSeq *iseq = bse_it3m_seq_from_seq (seq);
       if (iseq)
@@ -759,7 +759,7 @@ track_view_action_exec (gpointer data,
             {
               // automatically any output bus which doesn't have other inputs
               Bse::BusH bus = Bse::BusH::down_cast (bse_server.from_proxy (iseq->items[i]));
-              SfiSeq *bus_inputs_seq;
+              SfiSeq *bus_inputs_seq = nullptr;
               bse_proxy_get (bus.proxy_id(), "inputs", &bus_inputs_seq, nullptr);
               BseIt3mSeq *bus_inputs_iseq = bse_it3m_seq_from_seq (bus_inputs_seq);
               if (bus_inputs_iseq && bus_inputs_iseq->n_items == 1)
