@@ -755,7 +755,7 @@ jack_device_latency (BsePcmHandle *handle)
       wlatency = max (wlatency, latency);
     }
   
-  guint total_latency = 2 * jack->buffer_frames + rlatency + wlatency;
+  guint total_latency = jack->buffer_frames + rlatency + wlatency;
   PDEBUG ("rlatency=%.3f ms wlatency=%.3f ms ringbuffer=%.3f ms total_latency=%.3f ms",
           rlatency / double (handle->mix_freq) * 1000,
           wlatency / double (handle->mix_freq) * 1000,
