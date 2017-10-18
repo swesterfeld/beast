@@ -55,6 +55,7 @@ struct Options {
   BseResampler2Precision  precision;
   bool                    filter_impl_verbose;
   string		  program_name;
+  bool                    fpu;
 
   Options() :
     block_size (128),
@@ -66,7 +67,8 @@ struct Options {
     max_threshold_db (0),
     precision (BSE_RESAMPLER2_PREC_96DB),
     filter_impl_verbose (false),
-    program_name ("testresampler")
+    program_name ("testresampler"),
+    fpu (false)
   {
   }
   void parse (int *argc_p, char **argv_p[]);
@@ -284,6 +286,8 @@ Options::parse (int   *argc_p,
         resample_type = RES_SUBSAMPLE;
       else if (check_arg (argc, argv, &i, "--oversample"))
         resample_type = RES_OVERSAMPLE;
+      else if (check_arg (argc, argv, &i, "--fpu"))
+        fpu = true;
     }
 
   /* resort argc/argv */
@@ -641,16 +645,13 @@ perform_test()
 int
 main (int argc, char **argv)
 {
-  /* preprocess args: allow using --fpu instead of --bse-force-fpu,
-   * because its a really common use case for the resampler test
-   */
-  for (int i = 0; i < argc; i++)
-    if (strcmp (argv[i], "--fpu") == 0)
-      argv[i] = g_strdup ("--bse-force-fpu"); /* leak, but we don't care */
+  options.parse (&argc, &argv); // parse test options first, to setup options.fpu
 
   /* load plugins */
-  bse_init_test (&argc, argv, Bse::cstrings_to_vector ("load-core-plugins=1", NULL));
-  options.parse (&argc, &argv);
+  if (options.fpu)
+    bse_init_test (&argc, argv);
+  else
+    bse_init_test (&argc, argv, Bse::cstrings_to_vector ("load-core-plugins=1", NULL)); /* load sse impl */
 
   if (argc == 2)
     {
