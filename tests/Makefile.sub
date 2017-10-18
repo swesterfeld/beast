@@ -107,7 +107,7 @@ tests-testresampler-check-all:
 	tests/testresampler accuracy --up --precision=12 --freq-scan=50,18000,50 --max-threshold=66.5   # ideally: 72dB
 	tests/testresampler accuracy --up --precision=16 --freq-scan=50,18000,50 --max-threshold=89     # ideally: 96dB
 	tests/testresampler accuracy --up --precision=20 --freq-scan=50,18000,50 --max-threshold=113.5  # ideally: 120dB
-	tests/testresampler accuracy --up --precision=24 --freq-scan=50,18000,50 --max-threshold=126.5  # ideally: 144dB
+	tests/testresampler accuracy --up --precision=24 --freq-scan=50,18000,50 --max-threshold=126    # ideally: 144dB
 	: ## (possibly SSEified) downsampler tests
 	tests/testresampler accuracy --down --precision=8  --freq-scan=25,9000,25 --max-threshold=51    # ideally: 48dB
 	tests/testresampler accuracy --down --precision=12 --freq-scan=25,9000,25 --max-threshold=72    # ideally: 72dB
