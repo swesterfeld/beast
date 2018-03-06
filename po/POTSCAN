@@ -98,6 +98,7 @@ data/beast.xml.in
 data/bse.keys.in
 drivers/bsemididevice-alsa.cc
 drivers/bsepcmdevice-alsa.cc
+drivers/bsepcmdevice-jack.cc
 plugins/artscompressor.idl
 plugins/bleposc/bsebleposc.idl
 plugins/bseadder.cc

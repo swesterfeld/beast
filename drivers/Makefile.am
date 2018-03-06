@@ -20,3 +20,12 @@ bsepcmdevice_alsa_la_LIBADD  = $(drivers_libs) $(ALSA_LIBS)
 bsemididevice_alsa_la_SOURCES = bsemididevice-alsa.cc
 bsemididevice_alsa_la_LDFLAGS = $(AM_LDFLAGS) -module $(drivers_ldflags)
 bsemididevice_alsa_la_LIBADD  = $(drivers_libs) $(ALSA_LIBS)
+
+if WITH_JACK
+# Plugin bsepcmdevice-jack (built conditionally)
+drivers_LTLIBRARIES += bsepcmdevice-jack.la
+
+bsepcmdevice_jack_la_SOURCES = bsepcmdevice-jack.cc
+bsepcmdevice_jack_la_LDFLAGS = $(AM_LDFLAGS) -module $(drivers_ldflags)
+bsepcmdevice_jack_la_LIBADD  = $(drivers_libs) $(JACK_LIBS)
+endif
