@@ -564,6 +564,33 @@ AC_DEFUN([MC_JACK_REQUIREMENTS],
     AC_SUBST(JACK_CFLAGS)
     AC_SUBST(JACK_LIBS)
 ])
+AC_DEFUN([MC_SPECTMORPH_REQUIREMENTS],
+[
+    AC_ARG_WITH([spectmorph], AS_HELP_STRING([--without-spectmorph], [Build Beast without SpectMorph support]))
+
+    dnl check for spectmorph unless --without-spectmorph was used
+    if test "x$with_spectmorph" != "xno"; then
+        dnl # required libraries, defines LIB*_CFLAGS and LIB*_LIBS:
+        PKG_CHECK_MODULES(SPECTMORPH, spectmorph >= 0.3.4, [found_spectmorph="yes"], [found_spectmorph="no"])
+        PKG_CHECK_MODULES(SPECTMORPHGUI, spectmorphgui >= 0.3.4, [found_spectmorphgui="yes"], [found_spectmorphgui="no"])
+
+        dnl automatically build with spectmorph support, if it was found by pkg-config
+        if test "x$found_spectmorph-$found_spectmorphgui" = "xyes-yes"; then
+            QT5_MOC=`pkg-config --variable host_bins Qt5Core`/moc
+
+            with_spectmorph="yes"
+        else
+            with_spectmorph="no"
+        fi
+    fi
+    AC_SUBST(SPECTMORPH_CFLAGS)
+    AC_SUBST(SPECTMORPH_LIBS)
+    AC_SUBST(SPECTMORPHGUI_CFLAGS)
+    AC_SUBST(SPECTMORPHGUI_LIBS)
+    AC_SUBST(QT5_MOC)
+
+    AM_CONDITIONAL(WITH_SPECTMORPH, [test "x$with_spectmorph" != "xno"])
+])
 AC_DEFUN([MC_GXK_REQUIREMENTS],
 [
     dnl # required libraries, defines LIB*_CFLAGS and LIB*_LIBS:
@@ -734,6 +761,7 @@ MC_ASOUND_CHECK
 MC_JACK_REQUIREMENTS
 MC_BSE_SNDDEV_CHECK
 MC_PYTHON_REQUIREMENTS
+MC_SPECTMORPH_REQUIREMENTS
 MC_GXK_REQUIREMENTS
 MC_BEAST_REQUIREMENTS
 MC_SUIDMAIN_REQUIREMENTS
@@ -756,6 +784,8 @@ plugins/Makefile
 plugins/icons/Makefile
 plugins/freeverb/Makefile
 plugins/bleposc/Makefile
+plugins/spectmorph/Makefile
+plugins/spectmorph/gui/Makefile
 drivers/Makefile
 pybeast/Makefile
 beast-gtk/Makefile
@@ -778,6 +808,7 @@ echo "--------------------------------------------------------------------------
 echo "$PACKAGE_NAME $PACKAGE_VERSION"
 echo "---------------------------------------------------------------------------"
 echo "  JACK support . . . . . .: $with_jack"
+echo "  SpectMorph support . . .: $with_spectmorph"
 echo "  Install prefix . . . . .: $prefix"
 echo
 echo "Now type 'make', followed by 'make install' as root."
