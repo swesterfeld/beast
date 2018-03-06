@@ -770,7 +770,9 @@ track_view_action_exec (gpointer data,
 	  track.set_name (string);
 	  g_free (string);
 	  bst_item_view_select (item_view, track.proxy_id());
-          track.ensure_output();
+          Bse::BusH bus = song.create_bus();
+          bus.ensure_output();
+          bus.connect_track (track);
 	}
       song.ungroup_undo();
       break;
@@ -778,6 +780,27 @@ track_view_action_exec (gpointer data,
       item = bst_item_view_get_current (item_view);
       track = Bse::TrackH::down_cast (bse_server.from_proxy (item));
       song.group_undo ("Delete Track");
+      SfiSeq *seq = nullptr;
+      bse_proxy_get (track.proxy_id(), "outputs", &seq, NULL);
+      BseIt3mSeq *iseq = bse_it3m_seq_from_seq (seq);
+      if (iseq)
+        {
+          for (guint i = 0; i < iseq->n_items; i++)
+            {
+              // automatically any output bus which doesn't have other inputs
+              Bse::BusH bus = Bse::BusH::down_cast (bse_server.from_proxy (iseq->items[i]));
+              SfiSeq *bus_inputs_seq = nullptr;
+              bse_proxy_get (bus.proxy_id(), "inputs", &bus_inputs_seq, nullptr);
+              BseIt3mSeq *bus_inputs_iseq = bse_it3m_seq_from_seq (bus_inputs_seq);
+              if (bus_inputs_iseq && bus_inputs_iseq->n_items == 1)
+                {
+                  if (bus != song.get_master_bus())
+                    song.remove_bus (bus);
+                }
+              bse_it3m_seq_free (bus_inputs_iseq);
+            }
+        }
+      bse_it3m_seq_free (iseq);
       Bse::PartSeq pseq = track.list_parts_uniq();
       song.remove_track (track);
       for (const auto &part : pseq)
