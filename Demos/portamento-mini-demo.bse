@@ -3,12 +3,12 @@
 (bse-version "0.11.1")
 
 (container-child "BseWaveRepo::Wave-Repository"
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2018-03-06 12:43:30")
   (license "Creative Commons Attribution 2.5 (http://creativecommons.org/licenses/by/2.5/)")
   (author "Stefan Westerfeld"))
 (container-child "BseSoundFontRepo::Sound-Font-Repository"
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2018-03-06 12:43:30")
   (license "Creative Commons Attribution 2.5 (http://creativecommons.org/licenses/by/2.5/)")
   (author "Stefan Westerfeld"))
@@ -16,13 +16,13 @@
   (bpm 125)
   (musical_tuning OD_12_TET)
   (auto_activate 1)
-  (loop-right 6144)
-  (loop-left 0)
+  (loop-right 18432)
+  (loop-left 12288)
   (loop-enabled #t)
   (denominator 4)
   (numerator 4)
   (tpqn 384)
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2018-03-06 12:44:21")
   (license "Creative Commons Attribution 2.5 (http://creativecommons.org/licenses/by/2.5/)")
   (author "Stefan Westerfeld")
@@ -220,7 +220,7 @@
       (0x00c00 0x600 52 0 0.7874016)
       (0x01200 0x300 50 0 0.7874016)
       (0x01500 0x300 52 0 0.7874016)))
-  (container-child "BsePart::Part-5"
+  (container-child "BsePart::HH"
     (n-channels 1)
     (insert-notes 0
       (0x00000 0x05f 96)
@@ -239,7 +239,7 @@
       (0x004e0 0x060 96)
       (0x00540 0x060 96)
       (0x005a0 0x060 96)))
-  (container-child "BsePart::Part-6"
+  (container-child "BsePart::BD"
     (n-channels 1)
     (insert-notes 0
       (0x00000 0x180 33)
@@ -248,8 +248,8 @@
       (0x00480 0x180 32)))
   (container-child "BseBus::Master-1"
     (master-output #t)
-    (right-volume 0.25209448799383471)
-    (left-volume 0.25209448799383471)
+    (right-volume 0.36397822269054597)
+    (left-volume 0.36397822269054597)
     (bus-input (link 1 "Polysynth"))
     (bus-input (link 1 "Bass 2"))
     (bus-input (link 1 "OldDrums"))
@@ -260,12 +260,15 @@
     (pnet (link 2 "BQS Reverb"))
     (n-voices 24)
     (snet (link 2 "Lead Synth"))
-    (insert-part 0 (link 1 "Melody")))
+    (insert-part 0 (link 1 "Melody"))
+    (insert-part 6144 (link 1 "Melody"))
+    (insert-part 12288 (link 1 "Melody")))
   (container-child "BseTrack::Bass 2"
     (pnet (link 2 "BQS Reverb"))
     (n-voices 24)
     (snet (link 2 "BQS MoogSaw Bass"))
-    (insert-part 0 (link 1 "Bass")))
+    (insert-part 6144 (link 1 "Bass"))
+    (insert-part 12288 (link 1 "Bass")))
   (container-child "BseTrack::OldDrums"
     (n-voices 24)
     (muted #t)
@@ -273,26 +276,34 @@
   (container-child "BseTrack::String King"
     (n-voices 24)
     (snet (link 2 "FSM Synth String Sweep"))
-    (insert-part 0 (link 1 "Chords")))
+    (insert-part 12288 (link 1 "Chords")))
   (container-child "BseTrack::Track-05"
     (pnet (link 2 "BQS Reverb"))
     (n-voices 16)
     (snet (link 2 "PM Hihat"))
-    (insert-part 0 (link 1 "Part-5"))
-    (insert-part 1536 (link 1 "Part-5"))
-    (insert-part 3072 (link 1 "Part-5"))
-    (insert-part 4608 (link 1 "Part-5")))
+    (insert-part 0 (link 1 "HH"))
+    (insert-part 1536 (link 1 "HH"))
+    (insert-part 3072 (link 1 "HH"))
+    (insert-part 4608 (link 1 "HH"))
+    (insert-part 6144 (link 1 "HH"))
+    (insert-part 7680 (link 1 "HH"))
+    (insert-part 9216 (link 1 "HH"))
+    (insert-part 10752 (link 1 "HH"))
+    (insert-part 12288 (link 1 "HH"))
+    (insert-part 13824 (link 1 "HH"))
+    (insert-part 15360 (link 1 "HH"))
+    (insert-part 16896 (link 1 "HH")))
   (container-child "BseTrack::Track-06"
     (pnet (link 2 "BQS Reverb"))
     (n-voices 16)
     (snet (link 2 "PM BaseDrum"))
-    (insert-part 0 (link 1 "Part-6"))
-    (insert-part 1536 (link 1 "Part-6"))
-    (insert-part 3072 (link 1 "Part-6"))
-    (insert-part 4608 (link 1 "Part-6"))))
+    (insert-part 12288 (link 1 "BD"))
+    (insert-part 13824 (link 1 "BD"))
+    (insert-part 15360 (link 1 "BD"))
+    (insert-part 16896 (link 1 "BD"))))
 (container-child "BseCSynth::FSM Synth String Sweep"
   (auto_activate 0)
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2007-09-17 21:40:07")
   (license "Provided \"as is\", WITHOUT ANY WARRANTY (http://beast.testbit.eu/LICENSE-AS-IS)")
   (author "Krzysztof Foltman")
@@ -402,7 +413,7 @@
     (pos-x -3)))
 (container-child "BseCSynth::Lead Synth"
   (auto_activate 0)
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "1990-07-20 07:09:22")
   (license "Public Domain (https://creativecommons.org/publicdomain/zero/1.0/)")
   (author "Tim Janik")
@@ -480,7 +491,7 @@
     (source-input "gate-in" (link 1 "MidiInput-1") "gate")))
 (container-child "BseCSynth::BQS MoogSaw Bass"
   (auto_activate 0)
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2004-09-20 12:32:34")
   (license "Public Domain (https://creativecommons.org/publicdomain/zero/1.0/)")
   (author "Stefan Westerfeld, Tim Janik")
@@ -566,7 +577,7 @@
     (source-input "gate-in" (link 1 "SubKeyboard-1") "gate")))
 (container-child "BseCSynth::BQS Reverb"
   (auto_activate 0)
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2005-08-07 14:23:05")
   (license "Public Domain (https://creativecommons.org/publicdomain/zero/1.0/)")
   (author "Stefan Westerfeld")
@@ -590,7 +601,7 @@
     (source-input "right-audio-in" (link 1 "SubIPort-1") "output-2")))
 (container-child "BseCSynth::PM Hihat"
   (auto_activate 0)
-  (modification-time "2018-03-06 13:13:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2003-10-04 19:38:05")
   (license "Green OpenMusic License (http://openmusic.linuxtag.org)")
   (author "Stefan Westerfeld")
@@ -642,7 +653,7 @@
     (source-input "audio-in" (link 1 "BseNoise-1") "noise-out")))
 (container-child "BseCSynth::PM BaseDrum"
   (auto_activate 0)
-  (modification-time "2018-03-06 13:14:59")
+  (modification-time "2018-03-06 13:32:36")
   (creation-time "2003-10-04 18:06:54")
   (license "Green OpenMusic License (http://openmusic.linuxtag.org)")
   (author "Stefan Westerfeld")
