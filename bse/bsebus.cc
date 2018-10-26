@@ -785,6 +785,9 @@ bse_bus_disconnect (BseBus  *self,
   trackbus_update_outputs (trackbus, NULL, self);
   Bse::Error error1 = bse_source_unset_input (self->summation, 0, osource, 0);
   Bse::Error error2 = bse_source_unset_input (self->summation, 1, osource, 1);
+  printf ("[2] disconnecting summation %s output source %s:\n[2] errors: %s and %s\n",
+      bse_object_debug_name (self->summation), bse_object_debug_name (osource),
+      bse_error_blurb (error1), bse_error_blurb (error2));
   g_object_notify (G_OBJECT (self), "inputs");
   g_object_notify (G_OBJECT (trackbus), "outputs");
   return error1 != 0 ? error1 : error2;
@@ -1071,6 +1074,7 @@ BusImpl::disconnect_bus (BusIface &busi)
   BseBus *self = as<BseBus*>();
   BusImpl &bus = dynamic_cast<BusImpl&> (busi);
   Error error = bse_bus_disconnect (self, busi.as<BseItem*>());
+  printf ("[3] disconnect_bus returned: error %s\n", bse_error_blurb (error));
   if (error == 0)
     {
       // an undo lambda is needed for wrapping object argument references

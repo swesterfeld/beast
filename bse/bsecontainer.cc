@@ -1231,6 +1231,7 @@ bse_container_uncross_undoable (BseContainer *container,
   /* backup source channels state */
   if (BSE_IS_SOURCE (child))
     {
+      printf ("[1] clearing inputs and outputs for child: %s\n", bse_object_debug_name (child));
       bse_source_backup_ochannels_to_undo (BSE_SOURCE (child));
       bse_source_clear_ochannels (BSE_SOURCE (child));
       bse_source_backup_ichannels_to_undo (BSE_SOURCE (child));
