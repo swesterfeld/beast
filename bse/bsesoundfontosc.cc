@@ -9,6 +9,7 @@
 #include "bsemidireceiver.hh"
 #include "gslcommon.hh"
 #include "bse/internal.hh"
+#include "bseblockutils.hh"
 #include <string.h>
 
 /*------------------------------------------------------------------------------------------------
@@ -355,10 +356,7 @@ process_fluid_L (BseSoundFontRepo   *sfrepo,
 {
   Bse::SoundFontRepoImpl *sfrepo_impl = sfrepo->as<Bse::SoundFontRepoImpl *>();
 
-  float **channel_values_left = (float **) g_alloca (sfrepo_impl->n_fluid_channels * sizeof (float *));
-  float **channel_values_right = (float **) g_alloca (sfrepo_impl->n_fluid_channels * sizeof (float *));
-  float null_fx[BSE_STREAM_MAX_VALUES];
-  float *channel_fx_null[2] = { null_fx, null_fx };
+  float **channel_values = (float **) g_alloca (2 * sfrepo_impl->n_fluid_channels * sizeof (float *));
 
   assert_return (now_tick_stamp > sfrepo_impl->channel_values_tick_stamp);
   sfrepo_impl->channel_values_tick_stamp = now_tick_stamp;
@@ -366,12 +364,15 @@ process_fluid_L (BseSoundFontRepo   *sfrepo,
   /* Sample precise timing: If events don't occur at block boundary, the block
      is partially calculated, then the event is executed, and then the rest of
      the block (until the next event) is calculated, and so on */
+  guint values_remaining = bse_engine_block_size();
   for (guint i = 0; i < sfrepo_impl->n_fluid_channels; i++)
     {
-      channel_values_left[i] = &sfrepo_impl->channel_state[i].values_left[0];
-      channel_values_right[i] = &sfrepo_impl->channel_state[i].values_right[0];
+      channel_values[i * 2] = &sfrepo_impl->channel_state[i].values_left[0];
+      channel_values[i * 2 + 1] = &sfrepo_impl->channel_state[i].values_right[0];
+
+      bse_block_fill_0 (values_remaining, channel_values[i * 2]);
+      bse_block_fill_0 (values_remaining, channel_values[i * 2 + 1]);
     }
-  guint values_remaining = bse_engine_block_size();
   while (values_remaining)
     {
       /* get 1st event tick stamp */
@@ -414,15 +415,14 @@ process_fluid_L (BseSoundFontRepo   *sfrepo,
       else						     /* future event tick stamp: process audio until then */
 	{
 	  gint64 values_todo = MIN (values_remaining, event_tick_stamp - now_tick_stamp);
-	  fluid_synth_nwrite_float (fluid_synth, values_todo,
-				    channel_values_left, channel_values_right,
-				    channel_fx_null, channel_fx_null);
+	  fluid_synth_process (fluid_synth, values_todo,
+                               0, nullptr,
+                               2 * sfrepo_impl->n_fluid_channels, channel_values);
 	  values_remaining -= values_todo;
 	  now_tick_stamp += values_todo;
-	  for (guint i = 0; i < sfrepo_impl->n_fluid_channels; i++)          /* increment fluid synth output buffer pointers */
+	  for (guint i = 0; i < 2 * sfrepo_impl->n_fluid_channels; i++)          /* increment fluid synth output buffer pointers */
 	    {
-	      channel_values_left[i] += values_todo;
-	      channel_values_right[i] += values_todo;
+	      channel_values[i] += values_todo;
 	    }
 	}
     }
