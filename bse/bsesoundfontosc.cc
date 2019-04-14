@@ -370,8 +370,8 @@ process_fluid_L (BseSoundFontRepo   *sfrepo,
       channel_values[i * 2] = &sfrepo_impl->channel_state[i].values_left[0];
       channel_values[i * 2 + 1] = &sfrepo_impl->channel_state[i].values_right[0];
 
-      bse_block_fill_0 (values_remaining, channel_values[i * 2]);
-      bse_block_fill_0 (values_remaining, channel_values[i * 2 + 1]);
+      Bse::Block::fill (values_remaining, channel_values[i * 2], 0.0);
+      Bse::Block::fill (values_remaining, channel_values[i * 2 + 1], 0.0);
     }
   while (values_remaining)
     {
