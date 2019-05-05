@@ -165,6 +165,8 @@ public:
   virtual PropertyCandidates get_property_candidates (const String &property_name) override;
   /// Save the value of @a property_name onto the undo stack.
   void               push_property_undo  (const String &property_name);
+  void               block_property_undo();
+  void               unblock_property_undo();
   /// Push an undo @a function onto the undo stack, the @a self argument to @a function must match @a this.
   template<typename ItemT, typename... FuncArgs, typename... CallArgs> void
   push_undo (const String &blurb, ItemT &self, Error (ItemT::*function) (FuncArgs...), CallArgs... args)
@@ -276,6 +278,7 @@ private:
     lvalue = d;
     return valid;
   }
+  int property_undo_blocked = 0;
 };
 
 #define BSE_OBJECT_APPLY_IDL_PROPERTY(lvalue, rvalue)   this->apply_idl_property (lvalue, rvalue, __func__)

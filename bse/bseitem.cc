@@ -1090,6 +1090,8 @@ void
 ItemImpl::push_property_undo (const String &property_name)
 {
   assert_return (property_name.empty() == false);
+  if (property_undo_blocked)
+    return;
   Any saved_value = get_prop (property_name);
   if (saved_value.empty())
     Bse::warning ("%s: invalid property name: %s", __func__, property_name);
@@ -1333,6 +1335,18 @@ bool
 ItemImpl::apply_idl_property_need_undo (const StringVector &kvlist)
 {
   return !Aida::aux_vector_check_options (kvlist, "", "hints", "skip-undo");
+}
+
+void
+ItemImpl::block_property_undo()
+{
+  property_undo_blocked++;
+}
+
+void
+ItemImpl::unblock_property_undo()
+{
+  property_undo_blocked--;
 }
 
 } // Bse
