@@ -8,8 +8,6 @@
 enum
 {
   PARAM_0,
-  PARAM_AUTHOR,
-  PARAM_LICENSE,
   PARAM_COPYRIGHT,
   PARAM_CREATION_TIME,
   PARAM_MOD_TIME
@@ -36,12 +34,6 @@ bse_super_init (BseSuper *super,
 
   // default to 'Unnamed-###' unames
   bse_item_set (super, "uname", _("Unnamed"), NULL);
-
-  // default-fill fields
-  if (!Bse::global_config->author_default.empty())
-    bse_item_set (super, "author", Bse::global_config->author_default.c_str(), NULL);
-  if (!Bse::global_config->license_default.empty())
-    bse_item_set (super, "license", Bse::global_config->license_default.c_str(), NULL);
 }
 
 static void
@@ -64,18 +56,6 @@ bse_super_set_property (GObject      *object,
   BseSuper *super = BSE_SUPER (object);
   switch (param_id)
     {
-    case PARAM_AUTHOR:
-      g_object_set_qdata_full ((GObject*) super,
-			       quark_author,
-			       g_strdup (g_value_get_string (value)),
-			       g_free);
-      break;
-    case PARAM_LICENSE:
-      g_object_set_qdata_full ((GObject*) super,
-			       quark_license,
-			       g_strdup (g_value_get_string (value)),
-			       g_free);
-      break;
     case PARAM_COPYRIGHT:
       if (g_object_get_qdata ((GObject*) super, quark_license) == NULL)
         g_object_set_qdata_full ((GObject*) super, quark_license,
@@ -110,12 +90,6 @@ bse_super_get_property (GObject     *object,
   BseSuper *super = BSE_SUPER (object);
   switch (param_id)
     {
-    case PARAM_AUTHOR:
-      g_value_set_string (value, (const char*) g_object_get_qdata ((GObject*) super, quark_author));
-      break;
-    case PARAM_LICENSE:
-      g_value_set_string (value, (const char*) g_object_get_qdata ((GObject*) super, quark_license));
-      break;
     case PARAM_MOD_TIME:
       sfi_value_set_time (value, super->mod_time);
       break;
@@ -178,16 +152,6 @@ bse_super_class_init (BseSuperClass *klass)
   klass->compat_finish = super_compat_finish;
 
   bse_object_class_add_param (object_class, NULL,
-			      PARAM_AUTHOR,
-			      sfi_pspec_string ("author", _("Author"), _("Person changing or creating this object"),
-						"",
-						SFI_PARAM_STANDARD));
-  bse_object_class_add_param (object_class, NULL,
-			      PARAM_LICENSE,
-			      sfi_pspec_string ("license", _("License"), _("Copyright license applying to this object"),
-						"",
-						SFI_PARAM_STANDARD));
-  bse_object_class_add_param (object_class, NULL,
 			      PARAM_COPYRIGHT,
 			      sfi_pspec_string ("copyright", NULL, NULL, NULL, "w")); // COMPAT-FIXME: remove around 0.7.0
   bse_object_class_add_param (object_class, "Time Stamps",
@@ -227,11 +191,68 @@ namespace Bse {
 
 SuperImpl::SuperImpl (BseObject *bobj) :
   ContainerImpl (bobj)
-{}
+{
+  // default-fill fields
+  if (!Bse::global_config->author_default.empty())
+    set_qauthor (Bse::global_config->author_default);
+  if (!Bse::global_config->license_default.empty())
+    set_qlicense (Bse::global_config->license_default);
+}
 
 SuperImpl::~SuperImpl ()
 {}
 
+void
+SuperImpl::set_qauthor (const String& author)
+{
+  g_object_set_qdata_full ((GObject *) as<BseSuper*>(),
+                           quark_author,
+                           g_strdup (author.c_str()),
+                           g_free);
+}
+
+void
+SuperImpl::set_qlicense (const String& license)
+{
+  g_object_set_qdata_full ((GObject *) as<BseSuper*>(),
+                           quark_license,
+                           g_strdup (license.c_str()),
+                           g_free);
+}
+
+String
+SuperImpl::author() const
+{
+  BseSuper *self = const_cast<SuperImpl*> (this)->as<BseSuper *>();
+
+  auto str = (const char *) g_object_get_qdata (static_cast<GObject*> (self), quark_author);
+  return str ? str : ""; // avoid assigning NULL to std::string
+}
+
+void
+SuperImpl::author (const String& new_author)
+{
+  String value = author();
+  if (APPLY_IDL_PROPERTY (value, new_author))
+    set_qauthor (value);
+}
+
+String
+SuperImpl::license() const
+{
+  BseSuper *self = const_cast<SuperImpl*> (this)->as<BseSuper *>();
+
+  auto str = (const char *) g_object_get_qdata (static_cast<GObject*> (self), quark_license);
+  return str ? str : ""; // avoid assigning NULL to std::string
+}
+
+void
+SuperImpl::license (const String& new_license)
+{
+  String value = license();
+  if (APPLY_IDL_PROPERTY (value, new_license))
+    set_qlicense (value);
+}
 // BseSuper *self = as<BseSuper*>();
 // SuperIfaceP sp = super->as<SuperIfaceP>();
 

@@ -44,8 +44,15 @@ namespace Bse {
 class SuperImpl : public ContainerImpl, public virtual SuperIface {
 protected:
   virtual           ~SuperImpl         ();
+  void               set_qauthor       (const String& val);
+  void               set_qlicense      (const String& val);
 public:
   explicit           SuperImpl         (BseObject*);
+
+  virtual String     author            () const override;
+  virtual void       author            (const String& val) override;
+  virtual String     license           () const override;
+  virtual void       license           (const String& val) override;
 };
 
 } // Bse
