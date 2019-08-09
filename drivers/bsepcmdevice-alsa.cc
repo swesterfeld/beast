@@ -216,36 +216,49 @@ bse_pcm_device_alsa_open (BseDevice     *device,
   alsa->frame_size = handle->n_channels * 2; /* for 16bit samples */
   /* try open */
   gchar *dname = n_args ? g_strjoinv (",", (gchar**) args) : g_strdup ("default");
+  printf ("alsa: dname=%s\n", dname);
   snd_lib_error_set_handler (silent_error_handler);
   if (!aerror && require_readable)
+  {
     aerror = snd_pcm_open (&alsa->read_handle, dname, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
+    printf ("cap %d\n", aerror);
+  }
   if (!aerror && require_writable)
+  {
     aerror = snd_pcm_open (&alsa->write_handle, dname, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
-  snd_lib_error_set_handler (NULL);
+    printf ("wri %d\n", aerror);
+  }
+  //snd_lib_error_set_handler (NULL);
   /* try setup */
   const guint period_size = BSE_PCM_DEVICE (device)->req_block_length;
   Bse::Error error = !aerror ? Bse::Error::NONE : bse_error_from_errno (-aerror, Bse::Error::FILE_OPEN_FAILED);
   guint rh_freq = BSE_PCM_DEVICE (device)->req_mix_freq, rh_n_periods = 0, rh_period_size = period_size;
   if (!aerror && alsa->read_handle)
     error = alsa_device_setup (alsa, alsa->read_handle, BSE_PCM_DEVICE (device)->req_latency_ms, &rh_freq, &rh_n_periods, &rh_period_size);
+  printf ("[1] aerror=%d error=%d\n", aerror, error);
   guint wh_freq = BSE_PCM_DEVICE (device)->req_mix_freq, wh_n_periods = 0, wh_period_size = period_size;
   if (!aerror && alsa->write_handle)
     error = alsa_device_setup (alsa, alsa->write_handle, BSE_PCM_DEVICE (device)->req_latency_ms, &wh_freq, &wh_n_periods, &wh_period_size);
+  printf ("[2] aerror=%d error=%d\n", aerror, error);
   /* check duplex */
   if (error == 0 && alsa->read_handle && alsa->write_handle && rh_freq != wh_freq)
     error = Bse::Error::DEVICES_MISMATCH;
   handle->mix_freq = alsa->read_handle ? rh_freq : wh_freq;
+  printf ("[3] aerror=%d error=%d\n", aerror, error);
   if (error == 0 && alsa->read_handle && alsa->write_handle && rh_n_periods != wh_n_periods)
     error = Bse::Error::DEVICES_MISMATCH;
   alsa->n_periods = alsa->read_handle ? rh_n_periods : wh_n_periods;
   if (error == 0 && alsa->read_handle && alsa->write_handle && rh_period_size != wh_period_size)
     error = Bse::Error::DEVICES_MISMATCH;
+  printf ("[4] aerror=%d error=%s\n", aerror, bse_error_blurb (error));
   alsa->period_size = alsa->read_handle ? rh_period_size : wh_period_size;
   if (error == 0 && alsa->read_handle && alsa->write_handle &&
       snd_pcm_link (alsa->read_handle, alsa->write_handle) < 0)
     error = Bse::Error::DEVICES_MISMATCH;
+  printf ("[4.1] aerror=%d error=%s\n", aerror, bse_error_blurb (error));
   if (error == 0 && snd_pcm_prepare (alsa->read_handle ? alsa->read_handle : alsa->write_handle) < 0)
     error = Bse::Error::FILE_OPEN_FAILED;
+  printf ("[5] aerror=%d error=%s\n", aerror, bse_error_blurb (error));
 
   /* setup PCM handle or shutdown */
   if (error == 0)
