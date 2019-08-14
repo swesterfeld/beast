@@ -1,0 +1,20 @@
+// Licensed GNU LGPL v2.1 or later: http://www.gnu.org/licenses/lgpl.html
+include "bse/bsecxxmodule.idl";
+namespace Bse {
+interface Ladder : Effect {
+  Info    authors   = "Stefan Westerfeld";
+  Info    license   = _("GNU Lesser General Public License");
+  Info    category  = _("/Filters/Ladder");
+  Info    blurb     = _("Multimode ladder filter");
+  IStream audio_in1  = Stream (_("Audio In1"), _("Audio input 1"));
+  IStream audio_in2  = Stream (_("Audio In2"), _("Audio input 2"));
+  OStream audio_out1 = Stream (_("Audio Out1"), _("Filtered audio output 1"));
+  OStream audio_out2 = Stream (_("Audio Out2"), _("Filtered audio output 2"));
+
+  group _("Parameters") {
+    Real cutoff    = Freq (_("Cutoff"), _("Cutoff Frequency"), 440.0, STANDARD);
+    Real resonance = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 99.5, STANDARD);
+  };
+};
+
+} // Bse
