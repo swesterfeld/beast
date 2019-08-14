@@ -5,6 +5,7 @@
 #include <vector>
 #include "bleputils.hh"
 #include "bleposc.hh"
+#include "bleposcdata.cc"
 
 using namespace std;
 
