@@ -32,7 +32,6 @@ plugins/bseplugins.sources = $(strip		\
 	plugins/davbassfilter.cc		\
 	plugins/davchorus.cc			\
 	plugins/davorgan.cc			\
-	plugins/bsebleposc.cc			\
 )
 
 # == bseplugins.so defs ==
@@ -51,7 +50,6 @@ plugins/bseplugins.idlfiles = $(strip		\
 	plugins/davorgan.idl			\
 	plugins/standardguspatchenvelope.idl	\
 	plugins/standardsaturator.idl		\
-	plugins/bsebleposc.idl			\
 )
 
 # == freeverb.so ==
