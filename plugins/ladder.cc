@@ -7,20 +7,26 @@ class Ladder : public LadderBase {
   class Module : public SynthesisModule {
     struct VCF
     {
-      double x1 = 0;
-      double x2 = 0;
-      double x3 = 0;
-      double x4 = 0;
-      double y1 = 0;
-      double y2 = 0;
-      double y3 = 0;
-      double y4 = 0;
+      double x1, x2, x3, x4;
+      double y1, y2, y3, y4;
+      VCF()
+      {
+        reset();
+      }
+      void
+      reset()
+      {
+        x1 = x2 = x3 = x4 = 0;
+        y1 = y2 = y3 = y4 = 0;
+      }
       double
       run (double x, double fc, double res)
       {
         fc = M_PI * fc;
         const double g = 0.9892 * fc - 0.4342 * fc * fc + 0.1381 * fc * fc * fc - 0.0202 * fc * fc * fc * fc;
+        const double o = x;
 
+        res *= (1.0029 + 0.0526 * fc - 0.0926 * fc * fc + 0.0218 * fc * fc * fc);
         x -= y4 * res * 4;
 
         y1 = (x * 1 / 1.3 + x1 * 0.3/1.3 - y1) * g + y1;
@@ -45,6 +51,8 @@ class Ladder : public LadderBase {
     void
     reset()
     {
+      vcf1.reset();
+      vcf2.reset();
     }
     void
     config (LadderProperties *params)
