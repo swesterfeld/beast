@@ -1,6 +1,13 @@
 // Licensed GNU LGPL v2.1 or later: http://www.gnu.org/licenses/lgpl.html
 include "bse/bsecxxmodule.idl";
 namespace Bse {
+enum LadderFilterType {
+  LADDER_FILTER_LP4      = Enum (_("LP4"),      _("4 pole lowpass, 24db/octave")),
+  LADDER_FILTER_LP2      = Enum (_("LP2"),      _("2 pole lowpass, 12db/octave")),
+  LADDER_FILTER_HP4      = Enum (_("HP4"),      _("4 pole highpass, 24db/octave")),
+  LADDER_FILTER_HP2      = Enum (_("HP2"),      _("2 pole highpass, 12db/octave"))
+};
+
 interface Ladder : Effect {
   Info    authors   = "Stefan Westerfeld";
   Info    license   = _("GNU Lesser General Public License");
@@ -12,8 +19,9 @@ interface Ladder : Effect {
   OStream audio_out2 = Stream (_("Audio Out2"), _("Filtered audio output 2"));
 
   group _("Parameters") {
-    Real cutoff    = Freq (_("Cutoff"), _("Cutoff Frequency"), 440.0, STANDARD);
-    Real resonance = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 99.5, STANDARD);
+    Real cutoff     = Freq (_("Cutoff"), _("Cutoff Frequency"), 440.0, STANDARD);
+    Real resonance  = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 99.5, STANDARD);
+    LadderFilterType filter = SfiEnum (_("Ladder Filter Type"), _("The filter type for the ladder filter"), LADDER_FILTER_LP4, STANDARD);
   };
 };
 

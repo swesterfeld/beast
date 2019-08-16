@@ -31,6 +31,10 @@ class Ladder : public LadderBase {
       {
         x1 = x2 = x3 = x4 = 0;
         y1 = y2 = y3 = y4 = 0;
+
+        /* FIXME: resamplers should have a state reset function, so delete/new can be avoided */
+        res_up.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_UPSAMPLE, BSE_RESAMPLER2_PREC_120DB));
+        res_down.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_120DB));
       }
       double
       run (double x, double fc, double res)
@@ -58,39 +62,22 @@ class Ladder : public LadderBase {
         x4 = y3;
         return (x * a + y1 * b + y2 * c + y3 * d + y4 * e) * post_scale;
       }
-      Bse::Resampler::Resampler2 *res_up = nullptr;
-      Bse::Resampler::Resampler2 *res_down = nullptr;
-      double
-      run2 (double x, double fc, double res)
+      std::unique_ptr<Bse::Resampler::Resampler2> res_up;
+      std::unique_ptr<Bse::Resampler::Resampler2> res_down;
+      void
+      run_block (size_t       n_samples,
+                 double       fc,
+                 double       res,
+                 const float *in_samples,
+                 float       *out_samples)
       {
-        if (1)
-          {
-            if (!res_up)
-              res_up = Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_UPSAMPLE, BSE_RESAMPLER2_PREC_120DB);
-            if (!res_down)
-              res_down = Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_120DB);
+        float over_samples[2 * n_samples];
 
-            float block[1];
-            float up_block[2];
-            block[0] = x;
-            res_up->process_block (block, 1, up_block);
-            up_block[0] = run (up_block[0], fc * 0.5, res);
-            up_block[1] = run (up_block[1], fc * 0.5, res);
-            res_down->process_block (up_block, 2, block);
-            return block[0];
-          }
-        else if (0)
-          {
-            run (x, fc * 0.5, res);
-            return run (x, fc * 0.5, res);
-          }
-        else if (0)
-          {
-            run (x, fc * 0.5, res);
-            return run (0, fc * 0.5, res);
-          }
-        else
-          return run (x, fc, res);
+        res_up->process_block (in_samples, n_samples, over_samples);
+        fc *= 0.5; // oversampling
+        for (size_t i = 0; i < 2 * n_samples; i++)
+          over_samples[i] = run (over_samples[i], fc, res);
+        res_down->process_block (over_samples, 2 * n_samples, out_samples);
       }
     };
 
@@ -109,6 +96,17 @@ class Ladder : public LadderBase {
     {
       cutoff    = params->cutoff / (mix_freq() * 0.5);
       resonance = params->resonance / 100; /* percent */
+
+      VCF::Mode m = VCF::Mode::LP4;
+      switch (params->filter)
+      {
+        case LADDER_FILTER_LP4: m = VCF::Mode::LP4; break;
+        case LADDER_FILTER_LP2: m = VCF::Mode::LP2; break;
+        case LADDER_FILTER_HP4: m = VCF::Mode::HP4; break;
+        case LADDER_FILTER_HP2: m = VCF::Mode::HP2; break;
+      }
+      vcf1.set_mode (m);
+      vcf2.set_mode (m);
     }
     void
     process (unsigned int n_values)
@@ -118,17 +116,14 @@ class Ladder : public LadderBase {
       float *output1 = ostream (OCHANNEL_AUDIO_OUT1).values;
       float *output2 = ostream (OCHANNEL_AUDIO_OUT2).values;
 
-      for (unsigned int i = 0; i < n_values; i++)
-        {
-          output1[i] = vcf1.run2 (input1[i], cutoff, resonance);
-          output2[i] = vcf2.run2 (input2[i], cutoff, resonance);
-        }
+      vcf1.run_block (n_values, cutoff, resonance, input1, output1);
+      vcf2.run_block (n_values, cutoff, resonance, input2, output2);
     }
   };
   BSE_EFFECT_INTEGRATE_MODULE (Ladder, Module, LadderProperties);
 };
 
 BSE_CXX_DEFINE_EXPORTS();
-BSE_CXX_REGISTER_EFFECT (Ladder);
+BSE_CXX_REGISTER_ALL_TYPES_FROM_LADDER_IDL();
 
 }

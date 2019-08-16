@@ -34,6 +34,7 @@ plugins/bseplugins.sources = $(strip		\
 	plugins/davorgan.cc			\
 	plugins/bsebleposc.cc			\
 	plugins/ladder.cc			\
+	plugins/bseblockutils.cc		\
 )
 
 # == bseplugins.so defs ==
