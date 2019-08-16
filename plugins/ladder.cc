@@ -96,6 +96,17 @@ class Ladder : public LadderBase {
     {
       cutoff    = params->cutoff / (mix_freq() * 0.5);
       resonance = params->resonance / 100; /* percent */
+
+      VCF::Mode m = VCF::Mode::LP4;
+      switch (params->filter)
+      {
+        case LADDER_FILTER_LP4: m = VCF::Mode::LP4; break;
+        case LADDER_FILTER_LP2: m = VCF::Mode::LP2; break;
+        case LADDER_FILTER_HP4: m = VCF::Mode::HP4; break;
+        case LADDER_FILTER_HP2: m = VCF::Mode::HP2; break;
+      }
+      vcf1.set_mode (m);
+      vcf2.set_mode (m);
     }
     void
     process (unsigned int n_values)
@@ -113,6 +124,6 @@ class Ladder : public LadderBase {
 };
 
 BSE_CXX_DEFINE_EXPORTS();
-BSE_CXX_REGISTER_EFFECT (Ladder);
+BSE_CXX_REGISTER_ALL_TYPES_FROM_LADDER_IDL();
 
 }
