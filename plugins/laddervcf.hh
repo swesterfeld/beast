@@ -11,6 +11,8 @@ class LadderVCF
   double y1, y2, y3, y4;
   double a, b, c, d, e;
   double pre_scale, post_scale;
+  double rate;
+  double freq_mod_octaves;
 
   std::unique_ptr<Bse::Resampler::Resampler2> res_up;
   std::unique_ptr<Bse::Resampler::Resampler2> res_down;
@@ -20,6 +22,8 @@ public:
     reset();
     set_mode (Mode::LP4);
     set_drive (0);
+    set_rate (48000);
+    set_freq_mod_octaves (5);
   }
   enum class Mode { HP4, HP2, LP4, LP2 };
   void
@@ -39,6 +43,16 @@ public:
 
     pre_scale = 0.1 * drive_factor;
     post_scale = std::max (1 / pre_scale, 1.0);
+  }
+  void
+  set_rate (double r)
+  {
+    rate = r;
+  }
+  void
+  set_freq_mod_octaves (double octaves)
+  {
+    freq_mod_octaves = octaves;
   }
   void
   reset()
@@ -75,18 +89,42 @@ public:
     return (x * a + y1 * b + y2 * c + y3 * d + y4 * e) * post_scale;
   }
   void
-  run_block (size_t       n_samples,
+  run_block (uint         n_samples,
              double       fc,
              double       res,
              const float *in_samples,
-             float       *out_samples)
+             float       *out_samples,
+             const float *freq_in,
+             const float *freq_mod_in)
   {
     float over_samples[2 * n_samples];
+    float freq_scale = 0.5; // scale cutoff due to oversampling
+    float nyquist    = rate * 0.5;
 
     res_up->process_block (in_samples, n_samples, over_samples);
-    fc *= 0.5; // oversampling
-    for (size_t i = 0; i < 2 * n_samples; i++)
-      over_samples[i] = run (over_samples[i], fc, res);
+    fc *= freq_scale;
+
+    uint over_pos = 0;
+    for (uint i = 0; i < n_samples; i++)
+      {
+        // FIXME: handle freq_mod_in without freq_in
+        // FIXME: key tracking
+        if (freq_in)
+          {
+            fc = BSE_SIGNAL_TO_FREQ (freq_in[i]) * freq_scale / nyquist;
+
+            if (freq_mod_in)
+              fc *= bse_approx5_exp2 (freq_mod_in[i] * freq_mod_octaves);
+
+            fc = CLAMP (fc, 0, 1);
+          }
+
+        over_samples[over_pos] = run (over_samples[over_pos], fc, res);
+        over_pos++;
+
+        over_samples[over_pos] = run (over_samples[over_pos], fc, res);
+        over_pos++;
+      }
     res_down->process_block (over_samples, 2 * n_samples, out_samples);
   }
 };
