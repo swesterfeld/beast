@@ -35,6 +35,16 @@ class Ladder : public LadderBase {
       vcf2.set_mode (m);
       vcf1.set_drive (params->drive_db);
       vcf2.set_drive (params->drive_db);
+      vcf1.set_rate (mix_freq());
+      vcf2.set_rate (mix_freq());
+      vcf1.set_freq_mod_octaves (params->freq_mod_octaves);
+      vcf2.set_freq_mod_octaves (params->freq_mod_octaves);
+    }
+    const float *
+    istream_ptr (uint index)
+    {
+      const IStream& is = istream (index);
+      return is.connected ? is.values : nullptr;
     }
     void
     process (unsigned int n_values)
@@ -44,8 +54,8 @@ class Ladder : public LadderBase {
       float *output1 = ostream (OCHANNEL_AUDIO_OUT1).values;
       float *output2 = ostream (OCHANNEL_AUDIO_OUT2).values;
 
-      vcf1.run_block (n_values, cutoff, resonance, input1, output1);
-      vcf2.run_block (n_values, cutoff, resonance, input2, output2);
+      vcf1.run_block (n_values, cutoff, resonance, input1, output1, istream_ptr (ICHANNEL_FREQ_IN), istream_ptr (ICHANNEL_FREQ_MOD_IN));
+      vcf2.run_block (n_values, cutoff, resonance, input2, output2, istream_ptr (ICHANNEL_FREQ_IN), istream_ptr (ICHANNEL_FREQ_MOD_IN));
     }
   };
   BSE_EFFECT_INTEGRATE_MODULE (Ladder, Module, LadderProperties);
