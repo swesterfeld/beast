@@ -10,11 +10,13 @@ class Ladder : public LadderBase {
       double x1, x2, x3, x4;
       double y1, y2, y3, y4;
       double a, b, c, d, e;
+      double pre_scale, post_scale;
       enum class Mode { HP4, HP2, LP4, LP2 };
       VCF()
       {
         reset();
         set_mode (Mode::LP4);
+        set_drive (0);
       }
       void
       set_mode (Mode mode)
@@ -25,6 +27,14 @@ class Ladder : public LadderBase {
           case Mode::HP2: a = 1; b = -2; c =  1; d =  0; e = 0; break;
           case Mode::HP4: a = 1; b = -4; c =  6; d = -4; e = 1; break;
         }
+      }
+      void
+      set_drive (double drive_db)
+      {
+        double drive_factor = bse_db_to_factor (drive_db);
+
+        pre_scale = 0.1 * drive_factor;
+        post_scale = std::max (1 / pre_scale, 1.0);
       }
       void
       reset()
@@ -39,8 +49,6 @@ class Ladder : public LadderBase {
       double
       run (double x, double fc, double res)
       {
-        constexpr double pre_scale = 0.1;
-        constexpr double post_scale = 1 / pre_scale;
         x *= pre_scale;
 
         fc = M_PI * fc;
@@ -107,6 +115,8 @@ class Ladder : public LadderBase {
       }
       vcf1.set_mode (m);
       vcf2.set_mode (m);
+      vcf1.set_drive (params->drive_db);
+      vcf2.set_drive (params->drive_db);
     }
     void
     process (unsigned int n_values)
