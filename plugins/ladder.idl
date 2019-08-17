@@ -21,6 +21,7 @@ interface Ladder : Effect {
   group _("Parameters") {
     Real cutoff     = Freq (_("Cutoff"), _("Cutoff Frequency"), 440.0, STANDARD);
     Real resonance  = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 99.5, STANDARD);
+    Real drive_db   = Gain (_("Drive [dB]"), _("Set pre-filter gain to drive filter to saturation"), 0, -24, 36, 1, STANDARD ":scale");
     LadderFilterType filter = SfiEnum (_("Ladder Filter Type"), _("The filter type for the ladder filter"), LADDER_FILTER_LP4, STANDARD);
   };
 };
