@@ -5,6 +5,9 @@
 
 namespace Bse {
 
+enum class LadderVCFMode { HP4, HP2, LP4, LP2 };
+
+template<bool OVERSAMPLE, bool NON_LINEAR>
 class LadderVCF
 {
   double x1, x2, x3, x4;
@@ -20,20 +23,19 @@ public:
   LadderVCF()
   {
     reset();
-    set_mode (Mode::LP4);
+    set_mode (LadderVCFMode::LP4);
     set_drive (0);
     set_rate (48000);
     set_freq_mod_octaves (5);
   }
-  enum class Mode { HP4, HP2, LP4, LP2 };
   void
-  set_mode (Mode mode)
+  set_mode (LadderVCFMode mode)
   {
     switch (mode) {
-      case Mode::LP4: a = 0; b =  0; c =  0; d =  0; e = 1; break;
-      case Mode::LP2: a = 0; b =  0; c =  1; d =  0; e = 0; break;
-      case Mode::HP2: a = 1; b = -2; c =  1; d =  0; e = 0; break;
-      case Mode::HP4: a = 1; b = -4; c =  6; d = -4; e = 1; break;
+      case LadderVCFMode::LP4: a = 0; b =  0; c =  0; d =  0; e = 1; break;
+      case LadderVCFMode::LP2: a = 0; b =  0; c =  1; d =  0; e = 0; break;
+      case LadderVCFMode::HP2: a = 1; b = -2; c =  1; d =  0; e = 0; break;
+      case LadderVCFMode::HP4: a = 1; b = -4; c =  6; d = -4; e = 1; break;
     }
   }
   void
@@ -61,8 +63,23 @@ public:
     y1 = y2 = y3 = y4 = 0;
 
     /* FIXME: resamplers should have a state reset function, so delete/new can be avoided */
-    res_up.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_UPSAMPLE, BSE_RESAMPLER2_PREC_120DB));
-    res_down.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_120DB));
+    res_up.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_UPSAMPLE, BSE_RESAMPLER2_PREC_72DB));
+    res_down.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_72DB));
+  }
+  double
+  distort (double x)
+  {
+    if (NON_LINEAR)
+      {
+        /* shaped somewhat similar to tanh() and others, but faster */
+        x = std::clamp (x, -1.0, 1.0);
+
+        return x - x * x * x * (1.0 / 3);
+      }
+    else
+      {
+        return x;
+      }
   }
   double
   run (double x, double fc, double res)
@@ -73,18 +90,18 @@ public:
     const double g = 0.9892 * fc - 0.4342 * fc * fc + 0.1381 * fc * fc * fc - 0.0202 * fc * fc * fc * fc;
 
     res *= (1.0029 + 0.0526 * fc - 0.0926 * fc * fc + 0.0218 * fc * fc * fc);
-    x = bse_approx4_tanh (x - y4 * res * 4);
+    x = distort (x - y4 * res * 4);
 
-    y1 = (x * 1 / 1.3 + x1 * 0.3/1.3 - y1) * g + y1;
+    y1 = (x * (1 / 1.3) + x1 * (0.3 / 1.3) - y1) * g + y1;
     x1 = x;
 
-    y2 = (y1 * 1 / 1.3 + x2 * 0.3/1.3 - y2) * g + y2;
+    y2 = (y1 * (1 / 1.3) + x2 * (0.3 / 1.3) - y2) * g + y2;
     x2 = y1;
 
-    y3 = (y2 * 1 / 1.3 + x3 * 0.3/1.3 - y3) * g + y3;
+    y3 = (y2 * (1 / 1.3) + x3 * (0.3 / 1.3) - y3) * g + y3;
     x3 = y2;
 
-    y4 = (y3 * 1 / 1.3 + x4 * 0.3/1.3 - y4) * g + y4;
+    y4 = (y3 * (1 / 1.3) + x4 * (0.3 / 1.3) - y4) * g + y4;
     x4 = y3;
     return (x * a + y1 * b + y2 * c + y3 * d + y4 * e) * post_scale;
   }
@@ -98,10 +115,12 @@ public:
              const float *freq_mod_in)
   {
     float over_samples[2 * n_samples];
-    float freq_scale = 0.5; // scale cutoff due to oversampling
+    float freq_scale = OVERSAMPLE ? 0.5 : 1.0;
     float nyquist    = rate * 0.5;
 
-    res_up->process_block (in_samples, n_samples, over_samples);
+    if (OVERSAMPLE)
+      res_up->process_block (in_samples, n_samples, over_samples);
+
     fc *= freq_scale;
 
     uint over_pos = 0;
@@ -119,15 +138,32 @@ public:
             fc = CLAMP (fc, 0, 1);
           }
 
-        over_samples[over_pos] = run (over_samples[over_pos], fc, res);
-        over_pos++;
+        if (OVERSAMPLE)
+          {
+            over_samples[over_pos] = run (over_samples[over_pos], fc, res);
+            over_pos++;
 
-        over_samples[over_pos] = run (over_samples[over_pos], fc, res);
-        over_pos++;
+            over_samples[over_pos] = run (over_samples[over_pos], fc, res);
+            over_pos++;
+          }
+        else
+          {
+            out_samples[i] = run (in_samples[i], fc, res);
+          }
       }
-    res_down->process_block (over_samples, 2 * n_samples, out_samples);
+    if (OVERSAMPLE)
+      res_down->process_block (over_samples, 2 * n_samples, out_samples);
   }
 };
+
+// fast linear model of the filter
+typedef LadderVCF<false, false> LadderVCFLinear;
+
+// slow but accurate non-linear model of the filter (uses oversampling)
+typedef LadderVCF<true,  true>  LadderVCFNonLinear;
+
+// fast non-linear version (no oversampling), may have aliasing
+typedef LadderVCF<false, true>  LadderVCFNonLinearCheap;
 
 }
 

@@ -8,6 +8,12 @@ enum LadderFilterType {
   LADDER_FILTER_HP2      = Enum (_("HP2"),      _("2 pole highpass, 12db/octave"))
 };
 
+enum LadderImplType {
+  LADDER_IMPL_LINEAR            = Enum (_("Linear")),
+  LADDER_IMPL_NON_LINEAR        = Enum (_("Non Linear")),
+  LADDER_IMPL_NON_LINEAR_CHEAP  = Enum (_("Non Linear (cheap)"))
+};
+
 interface Ladder : Effect {
   Info    authors   = "Stefan Westerfeld";
   Info    license   = _("GNU Lesser General Public License");
@@ -29,6 +35,7 @@ interface Ladder : Effect {
     Real resonance  = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 99.5, STANDARD);
     Real drive_db   = Gain (_("Drive [dB]"), _("Set pre-filter gain to drive filter to saturation"), 0, -24, 36, 1, STANDARD ":scale");
     LadderFilterType filter = SfiEnum (_("Ladder Filter Type"), _("The filter type for the ladder filter"), LADDER_FILTER_LP4, STANDARD);
+    LadderImplType impl = SfiEnum (_("Ladder Impl Type"), _("The implementation of the ladder filter"), LADDER_IMPL_LINEAR, STANDARD);
   };
 };
 
