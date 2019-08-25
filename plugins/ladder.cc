@@ -6,9 +6,9 @@ namespace Bse {
 
 class Ladder : public LadderBase {
   class Module : public SynthesisModule {
-    LadderVCFLinear vcf1l, vcf2l;
-    LadderVCFNonLinear vcf1nl, vcf2nl;
-    LadderVCFNonLinearCheap vcf1nlc, vcf2nlc;
+    LadderVCFLinear vcf_l;
+    LadderVCFNonLinear vcf_nl;
+    LadderVCFNonLinearCheap vcf_nlc;
 
     double cutoff    = 0;
     double resonance = 0;
@@ -17,14 +17,9 @@ class Ladder : public LadderBase {
     void
     reset()
     {
-      auto res = [] (auto& vcf1, auto& vcf2)
-        {
-          vcf1.reset();
-          vcf2.reset();
-        };
-      res (vcf1l, vcf2l);
-      res (vcf1nl, vcf2nl);
-      res (vcf1nlc, vcf2nlc);
+      vcf_l.reset();
+      vcf_nl.reset();
+      vcf_nlc.reset();
     }
     void
     config (LadderProperties *params)
@@ -33,28 +28,24 @@ class Ladder : public LadderBase {
       resonance = params->resonance / 100; /* percent */
       ladder_impl = params->impl;
 
-      auto cfg = [&] (auto& vcf1, auto& vcf2)
+      auto cfg = [&] (auto& vcf)
         {
           LadderVCFMode m = LadderVCFMode::LP4;
           switch (params->filter)
           {
             case LADDER_FILTER_LP4: m = LadderVCFMode::LP4; break;
+            case LADDER_FILTER_LP3: m = LadderVCFMode::LP3; break;
             case LADDER_FILTER_LP2: m = LadderVCFMode::LP2; break;
-            case LADDER_FILTER_HP4: m = LadderVCFMode::HP4; break;
-            case LADDER_FILTER_HP2: m = LadderVCFMode::HP2; break;
+            case LADDER_FILTER_LP1: m = LadderVCFMode::LP1; break;
           }
-          vcf1.set_mode (m);
-          vcf2.set_mode (m);
-          vcf1.set_drive (params->drive_db);
-          vcf2.set_drive (params->drive_db);
-          vcf1.set_rate (mix_freq());
-          vcf2.set_rate (mix_freq());
-          vcf1.set_freq_mod_octaves (params->freq_mod_octaves);
-          vcf2.set_freq_mod_octaves (params->freq_mod_octaves);
+          vcf.set_mode (m);
+          vcf.set_drive (params->drive_db);
+          vcf.set_rate (mix_freq());
+          vcf.set_freq_mod_octaves (params->freq_mod_octaves);
         };
-      cfg (vcf1l, vcf2l);
-      cfg (vcf1nl, vcf2nl);
-      cfg (vcf1nlc, vcf2nlc);
+      cfg (vcf_l);
+      cfg (vcf_nl);
+      cfg (vcf_nlc);
     }
     const float *
     istream_ptr (uint index)
@@ -65,26 +56,24 @@ class Ladder : public LadderBase {
     void
     process (unsigned int n_values)
     {
-      const float *input1 = istream (ICHANNEL_AUDIO_IN1).values;
-      const float *input2 = istream (ICHANNEL_AUDIO_IN2).values;
-      float *output1 = ostream (OCHANNEL_AUDIO_OUT1).values;
-      float *output2 = ostream (OCHANNEL_AUDIO_OUT2).values;
+      float *inputs[2] { const_cast<float *> (istream (ICHANNEL_AUDIO_IN1).values),
+                         const_cast<float *> (istream (ICHANNEL_AUDIO_IN2).values) };
+      float *outputs[2] = { ostream (OCHANNEL_AUDIO_OUT1).values, ostream (OCHANNEL_AUDIO_OUT2).values };
 
-      auto run = [&] (auto& vcf1, auto& vcf2)
+      auto run = [&] (auto& vcf)
         {
-          vcf1.run_block (n_values, cutoff, resonance, input1, output1, istream_ptr (ICHANNEL_FREQ_IN), istream_ptr (ICHANNEL_FREQ_MOD_IN));
-          vcf2.run_block (n_values, cutoff, resonance, input2, output2, istream_ptr (ICHANNEL_FREQ_IN), istream_ptr (ICHANNEL_FREQ_MOD_IN));
+          vcf.run_block (n_values, cutoff, resonance, inputs, outputs, istream_ptr (ICHANNEL_FREQ_IN), istream_ptr (ICHANNEL_FREQ_MOD_IN));
         };
       switch (ladder_impl)
       {
         case LADDER_IMPL_LINEAR:
-          run (vcf1l, vcf2l);
+          run (vcf_l);
           break;
         case LADDER_IMPL_NON_LINEAR:
-          run (vcf1nl, vcf2nl);
+          run (vcf_nl);
           break;
         case LADDER_IMPL_NON_LINEAR_CHEAP:
-          run (vcf1nlc, vcf2nlc);
+          run (vcf_nlc);
           break;
       }
     }
