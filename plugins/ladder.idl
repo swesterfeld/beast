@@ -3,9 +3,9 @@ include "bse/bsecxxmodule.idl";
 namespace Bse {
 enum LadderFilterType {
   LADDER_FILTER_LP4      = Enum (_("LP4"),      _("4 pole lowpass, 24db/octave")),
+  LADDER_FILTER_LP3      = Enum (_("LP3"),      _("3 pole lowpass, 12db/octave")),
   LADDER_FILTER_LP2      = Enum (_("LP2"),      _("2 pole lowpass, 12db/octave")),
-  LADDER_FILTER_HP4      = Enum (_("HP4"),      _("4 pole highpass, 24db/octave")),
-  LADDER_FILTER_HP2      = Enum (_("HP2"),      _("2 pole highpass, 12db/octave"))
+  LADDER_FILTER_LP1      = Enum (_("LP1"),      _("1 pole highpass, 6db/octave")),
 };
 
 enum LadderImplType {
@@ -32,7 +32,7 @@ interface Ladder : Effect {
     Real cutoff           = Freq (_("Cutoff"), _("Cutoff Frequency"), 440.0, STANDARD);
     Real freq_mod_octaves = (_("Freq Mod [Octaves]"), _("Exponential frequency modulation: Number of Octaves"), 1.0, -5.0, 5.0, 0.01, STANDARD ":f:scale");
 
-    Real resonance  = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 99.5, STANDARD);
+    Real resonance  = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 25, STANDARD);
     Real drive_db   = Gain (_("Drive [dB]"), _("Set pre-filter gain to drive filter to saturation"), 0, -24, 36, 1, STANDARD ":scale");
     LadderFilterType filter = SfiEnum (_("Ladder Filter Type"), _("The filter type for the ladder filter"), LADDER_FILTER_LP4, STANDARD);
     LadderImplType impl = SfiEnum (_("Ladder Impl Type"), _("The implementation of the ladder filter"), LADDER_IMPL_LINEAR, STANDARD);
