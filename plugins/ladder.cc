@@ -56,9 +56,8 @@ class Ladder : public LadderBase {
     void
     process (unsigned int n_values)
     {
-      float *inputs[2] { const_cast<float *> (istream (ICHANNEL_AUDIO_IN1).values),
-                         const_cast<float *> (istream (ICHANNEL_AUDIO_IN2).values) };
-      float *outputs[2] = { ostream (OCHANNEL_AUDIO_OUT1).values, ostream (OCHANNEL_AUDIO_OUT2).values };
+      const float *inputs[2]  = { istream (ICHANNEL_AUDIO_IN1).values,  istream (ICHANNEL_AUDIO_IN2).values };
+      float       *outputs[2] = { ostream (OCHANNEL_AUDIO_OUT1).values, ostream (OCHANNEL_AUDIO_OUT2).values };
 
       auto run = [&] (auto& vcf)
         {

@@ -5,6 +5,123 @@
 
 namespace Bse {
 
+namespace LadderVCFInterpolator
+{
+
+class Inter0 /* zero order hold */
+{
+public:
+  void
+  reset()
+  {
+    // nothing to do, but required to be compatible with other Inter* API
+  }
+  void
+  process_block (const float *in, uint n_input_samples, float *out)
+  {
+    for (uint i = 0; i < n_input_samples; i++)
+      {
+        *out++ = in[i];
+        *out++ = in[i];
+      }
+  }
+};
+
+class Inter1 /* linear interpolation */
+{
+  float x1 = 0;
+public:
+  void
+  reset()
+  {
+    x1 = 0;
+  }
+  void
+  process_block (const float *in, uint n_input_samples, float *out)
+  {
+    for (uint i = 0; i < n_input_samples; i++)
+      {
+        const float x = in[i];
+        *out++ = (x1 + x) * 0.5f;
+        *out++ = x;
+        x1 = x;
+      }
+  }
+};
+
+class Inter2 /* interpolate using 2 samples before and 2 samples after current value */
+{
+  // kaiser window beta=1.0
+  static constexpr float a = 0.620936976;
+  static constexpr float b = -0.167611018;
+
+  float x1 = 0, x2 = 0, x3 = 0;
+public:
+  void
+  reset()
+  {
+    x1 = 0;
+    x2 = 0;
+    x3 = 0;
+  }
+  void
+  process_block (const float *in, uint n_input_samples, float *out)
+  {
+    for (uint i = 0; i < n_input_samples; i++)
+      {
+        const float x = in[i];
+        *out++ = a * (x2 + x1) + b * (x3 + x);
+        *out++ = x1;
+        x3 = x2;
+        x2 = x1;
+        x1 = x;
+      }
+  }
+};
+
+class Inter3 /* interpolate using 3 samples before and 3 samples after current value */
+{
+/* Design a, b, c in python3:
+ *
+ * from scipy import signal
+ * filt = signal.firwin (11, 0.5, window=('kaiser', 1.25))
+ * print ([x / filt[5] for x in filt])
+ */
+  static constexpr float a = 0.6282472844;
+  static constexpr float b = -0.1878178252;
+  static constexpr float c = 0.0890085557;
+
+  float x1 = 0, x2 = 0, x3 = 0, x4 = 0, x5 = 0;
+public:
+  void
+  reset()
+  {
+    x1 = 0;
+    x2 = 0;
+    x3 = 0;
+    x4 = 0;
+    x5 = 0;
+  }
+  void
+  process_block (const float *in, uint n_input_samples, float *out)
+  {
+    for (uint i = 0; i < n_input_samples; i++)
+      {
+        const float x = in[i];
+
+        *out++ = a * (x3 + x2) + b * (x4 + x1) + c * (x5 + x);
+        *out++ = x2;
+        x5 = x4;
+        x4 = x3;
+        x3 = x2;
+        x2 = x1;
+        x1 = x;
+      }
+  }
+};
+
+}
+
 enum class LadderVCFMode { LP1, LP2, LP3, LP4 };
 
 template<bool OVERSAMPLE, bool NON_LINEAR>
@@ -14,7 +131,7 @@ class LadderVCF
     double x1, x2, x3, x4;
     double y1, y2, y3, y4;
 
-    std::unique_ptr<Bse::Resampler::Resampler2> res_up;
+    LadderVCFInterpolator::Inter3               interpolator;
     std::unique_ptr<Bse::Resampler::Resampler2> res_down;
   };
   std::array<Channel, 2> channels;
@@ -63,9 +180,9 @@ public:
         c.x1 = c.x2 = c.x3 = c.x4 = 0;
         c.y1 = c.y2 = c.y3 = c.y4 = 0;
 
+        c.interpolator.reset();
         /* FIXME: resamplers should have a state reset function, so delete/new can be avoided */
-        c.res_up.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_UPSAMPLE, BSE_RESAMPLER2_PREC_72DB));
-        c.res_down.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_72DB));
+        c.res_down.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_48DB));
       }
   }
   double
@@ -131,13 +248,13 @@ private:
       }
   }
   template<LadderVCFMode MODE> inline void
-  do_run_block (uint         n_samples,
-                double       fc,
-                double       res,
-                float      **inputs,
-                float      **outputs,
-                const float *freq_in,
-                const float *freq_mod_in)
+  do_run_block (uint          n_samples,
+                double        fc,
+                double        res,
+                const float **inputs,
+                float       **outputs,
+                const float  *freq_in,
+                const float  *freq_mod_in)
   {
     float over_samples[2][2 * n_samples];
     float freq_scale = OVERSAMPLE ? 0.5 : 1.0;
@@ -146,7 +263,7 @@ private:
     if (OVERSAMPLE)
       {
         for (size_t i = 0; i < channels.size(); i++)
-          channels[i].res_up->process_block (inputs[i], n_samples, over_samples[i]);
+          channels[i].interpolator.process_block (inputs[i], n_samples, over_samples[i]);
       }
 
     fc *= freq_scale;
@@ -200,13 +317,13 @@ private:
   }
 public:
   void
-  run_block (uint         n_samples,
-             double       fc,
-             double       res,
-             float      **inputs,
-             float      **outputs,
-             const float *freq_in,
-             const float *freq_mod_in)
+  run_block (uint           n_samples,
+             double         fc,
+             double         res,
+             const float  **inputs,
+             float        **outputs,
+             const float   *freq_in,
+             const float   *freq_mod_in)
   {
     switch (mode)
     {
