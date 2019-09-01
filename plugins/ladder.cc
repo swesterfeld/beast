@@ -42,6 +42,7 @@ class Ladder : public LadderBase {
           vcf.set_drive (params->drive_db);
           vcf.set_rate (mix_freq());
           vcf.set_freq_mod_octaves (params->freq_mod_octaves);
+          vcf.set_key_tracking (params->key_tracking / 100);
         };
       cfg (vcf_l);
       cfg (vcf_nl);
@@ -61,7 +62,10 @@ class Ladder : public LadderBase {
 
       auto run = [&] (auto& vcf)
         {
-          vcf.run_block (n_values, cutoff, resonance, inputs, outputs, istream_ptr (ICHANNEL_FREQ_IN), istream_ptr (ICHANNEL_FREQ_MOD_IN));
+          vcf.run_block (n_values, cutoff, resonance, inputs, outputs,
+                         istream_ptr (ICHANNEL_FREQ_IN),
+                         istream_ptr (ICHANNEL_FREQ_MOD_IN),
+                         istream_ptr (ICHANNEL_KEY_FREQ_IN));
         };
       switch (ladder_impl)
       {
