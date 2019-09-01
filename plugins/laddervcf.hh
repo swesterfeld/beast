@@ -22,6 +22,7 @@ class LadderVCF
   double pre_scale, post_scale;
   double rate;
   double freq_mod_octaves;
+  double key_tracking;
 
 public:
   LadderVCF()
@@ -31,6 +32,7 @@ public:
     set_drive (0);
     set_rate (48000);
     set_freq_mod_octaves (5);
+    set_key_tracking (0.5);
   }
   void
   set_mode (LadderVCFMode new_mode)
@@ -54,6 +56,11 @@ public:
   set_freq_mod_octaves (double octaves)
   {
     freq_mod_octaves = octaves;
+  }
+  void
+  set_key_tracking (double amount)
+  {
+    key_tracking = amount;
   }
   void
   reset()
@@ -137,7 +144,8 @@ private:
                 const float **inputs,
                 float       **outputs,
                 const float  *freq_in,
-                const float  *freq_mod_in)
+                const float  *freq_mod_in,
+                const float  *key_freq_in)
   {
     float over_samples[2][2 * n_samples];
     float freq_scale = OVERSAMPLE ? 0.5 : 1.0;
@@ -154,31 +162,34 @@ private:
     uint over_pos = 0;
     for (uint i = 0; i < n_samples; i++)
       {
+        double mod_fc = fc;
+
         // FIXME: handle freq_mod_in without freq_in
-        // FIXME: key tracking
         if (freq_in)
-          {
-            fc = BSE_SIGNAL_TO_FREQ (freq_in[i]) * freq_scale / nyquist;
+          mod_fc = BSE_SIGNAL_TO_FREQ (freq_in[i]) * freq_scale / nyquist;
 
-            if (freq_mod_in)
-              fc *= bse_approx5_exp2 (freq_mod_in[i] * freq_mod_octaves);
+        if (freq_mod_in)
+          mod_fc *= bse_approx5_exp2 (freq_mod_in[i] * freq_mod_octaves);
 
-            fc = CLAMP (fc, 0, 1);
-          }
+        if (key_freq_in)
+          mod_fc *= exp (key_tracking * log (BSE_SIGNAL_TO_FREQ (key_freq_in[i]) / 261.63));
+
+        mod_fc = CLAMP (mod_fc, 0, 1);
+
         if (OVERSAMPLE)
           {
             double in[2], out[2];
 
             in[0] = over_samples[0][over_pos];
             in[1] = over_samples[1][over_pos];
-            run<MODE> (in, out, fc, res);
+            run<MODE> (in, out, mod_fc, res);
             over_samples[0][over_pos] = out[0];
             over_samples[1][over_pos] = out[1];
             over_pos++;
 
             in[0] = over_samples[0][over_pos];
             in[1] = over_samples[1][over_pos];
-            run<MODE> (in, out, fc, res);
+            run<MODE> (in, out, mod_fc, res);
             over_samples[0][over_pos] = out[0];
             over_samples[1][over_pos] = out[1];
             over_pos++;
@@ -187,7 +198,7 @@ private:
           {
             double in[2] = { inputs[0][i], inputs[1][i] };
             double out[2];
-            run<MODE> (in, out, fc, res);
+            run<MODE> (in, out, mod_fc, res);
             outputs[0][i] = out[0];
             outputs[1][i] = out[1];
           }
@@ -206,17 +217,22 @@ public:
              const float  **inputs,
              float        **outputs,
              const float   *freq_in,
-             const float   *freq_mod_in)
+             const float   *freq_mod_in,
+             const float   *key_freq_in)
   {
     switch (mode)
     {
-      case LadderVCFMode::LP4: do_run_block<LadderVCFMode::LP4> (n_samples, fc, res, inputs, outputs, freq_in, freq_mod_in);
+      case LadderVCFMode::LP4: do_run_block<LadderVCFMode::LP4> (n_samples, fc, res, inputs, outputs,
+                                                                 freq_in, freq_mod_in, key_freq_in);
                                break;
-      case LadderVCFMode::LP3: do_run_block<LadderVCFMode::LP3> (n_samples, fc, res, inputs, outputs, freq_in, freq_mod_in);
+      case LadderVCFMode::LP3: do_run_block<LadderVCFMode::LP3> (n_samples, fc, res, inputs, outputs,
+                                                                 freq_in, freq_mod_in, key_freq_in);
                                break;
-      case LadderVCFMode::LP2: do_run_block<LadderVCFMode::LP2> (n_samples, fc, res, inputs, outputs, freq_in, freq_mod_in);
+      case LadderVCFMode::LP2: do_run_block<LadderVCFMode::LP2> (n_samples, fc, res, inputs, outputs,
+                                                                 freq_in, freq_mod_in, key_freq_in);
                                break;
-      case LadderVCFMode::LP1: do_run_block<LadderVCFMode::LP1> (n_samples, fc, res, inputs, outputs, freq_in, freq_mod_in);
+      case LadderVCFMode::LP1: do_run_block<LadderVCFMode::LP1> (n_samples, fc, res, inputs, outputs,
+                                                                 freq_in, freq_mod_in, key_freq_in);
                                break;
     }
   }

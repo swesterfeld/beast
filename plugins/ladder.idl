@@ -24,6 +24,7 @@ interface Ladder : Effect {
   IStream audio_in2  = Stream (_("Audio In2"), _("Audio input 2"));
   IStream freq_in    = Stream (_("Freq In"), _("Frequency Input"));
   IStream freq_mod_in = Stream (_("Freq Mod In"), _("Frequency Modulation Input"));
+  IStream key_freq_in = Stream (_("Key Freq In"), _("Keyboard Frequency Input (Key Tracking)"));
 
   OStream audio_out1 = Stream (_("Audio Out1"), _("Filtered audio output 1"));
   OStream audio_out2 = Stream (_("Audio Out2"), _("Filtered audio output 2"));
@@ -31,6 +32,7 @@ interface Ladder : Effect {
   group _("Parameters") {
     Real cutoff           = Freq (_("Cutoff"), _("Cutoff Frequency"), 440.0, STANDARD);
     Real freq_mod_octaves = (_("Freq Mod [Octaves]"), _("Exponential frequency modulation: Number of Octaves"), 1.0, -5.0, 5.0, 0.01, STANDARD ":f:scale");
+    Real key_tracking = Perc (_("Key Tracking [%]"), _("Set the key tracking amount in percent"), 50, STANDARD);
 
     Real resonance  = Perc (_("Resonance [%]"), _("Set the amount of resonance in percent"), 25, STANDARD);
     Real drive_db   = Gain (_("Drive [dB]"), _("Set pre-filter gain to drive filter to saturation"), 0, -24, 36, 1, STANDARD ":scale");
