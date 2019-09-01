@@ -16,6 +16,12 @@ class LadderVCF
 
     std::unique_ptr<Bse::Resampler::Resampler2> res_up;
     std::unique_ptr<Bse::Resampler::Resampler2> res_down;
+
+    Channel() :
+      res_up (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_UPSAMPLE, BSE_RESAMPLER2_PREC_48DB)),
+      res_down (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_48DB))
+    {
+    }
   };
   std::array<Channel, 2> channels;
   LadderVCFMode mode;
@@ -70,8 +76,8 @@ public:
         c.x1 = c.x2 = c.x3 = c.x4 = 0;
         c.y1 = c.y2 = c.y3 = c.y4 = 0;
 
-        c.res_up.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_UPSAMPLE, BSE_RESAMPLER2_PREC_48DB));
-        c.res_down.reset (Bse::Resampler::Resampler2::create (BSE_RESAMPLER2_MODE_DOWNSAMPLE, BSE_RESAMPLER2_PREC_48DB));
+        c.res_up->reset();
+        c.res_down->reset();
       }
   }
   double
@@ -164,7 +170,6 @@ private:
       {
         double mod_fc = fc;
 
-        // FIXME: handle freq_mod_in without freq_in
         if (freq_in)
           mod_fc = BSE_SIGNAL_TO_FREQ (freq_in[i]) * freq_scale / nyquist;
 
