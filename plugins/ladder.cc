@@ -64,6 +64,8 @@ class Ladder : public LadderBase {
       auto run = [&] (auto& vcf)
         {
           vcf.run_block (n_values, cutoff, resonance, inputs, outputs,
+                         ostream (OCHANNEL_AUDIO_OUT1).connected, // need left channel?
+                         ostream (OCHANNEL_AUDIO_OUT2).connected, // need right channel?
                          istream_ptr (ICHANNEL_FREQ_IN),
                          istream_ptr (ICHANNEL_FREQ_MOD_IN),
                          istream_ptr (ICHANNEL_KEY_FREQ_IN),
