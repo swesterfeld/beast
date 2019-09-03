@@ -14,11 +14,11 @@ enum LadderImplType {
   LADDER_IMPL_NON_LINEAR_CHEAP  = Enum (_("Non Linear (cheap)"))
 };
 
-interface Ladder : Effect {
+interface LadderFilter : Effect {
   Info    authors   = "Stefan Westerfeld";
   Info    license   = _("GNU Lesser General Public License");
-  Info    category  = _("/Filters/Ladder");
-  Info    blurb     = _("Multimode ladder filter");
+  Info    category  = _("/Filters/Ladder Filter");
+  Info    blurb     = _("Resonant ladder lowpass filter with adjustable slope");
 
   IStream audio_in1  = Stream (_("Audio In1"), _("Audio input 1"));
   IStream audio_in2  = Stream (_("Audio In2"), _("Audio input 2"));

@@ -1,10 +1,10 @@
 // Licensed GNU LGPL v2.1 or later: http://www.gnu.org/licenses/lgpl.html
-#include "ladder.genidl.hh"
+#include "ladderfilter.genidl.hh"
 #include "laddervcf.hh"
 
 namespace Bse {
 
-class Ladder : public LadderBase {
+class LadderFilter : public LadderFilterBase {
   class Module : public SynthesisModule {
     LadderVCFLinear vcf_l;
     LadderVCFNonLinear vcf_nl;
@@ -22,7 +22,7 @@ class Ladder : public LadderBase {
       vcf_nlc.reset();
     }
     void
-    config (LadderProperties *params)
+    config (LadderFilterProperties *params)
     {
       cutoff    = params->cutoff / (mix_freq() * 0.5);
       resonance = params->resonance / 100; /* percent */
@@ -85,10 +85,10 @@ class Ladder : public LadderBase {
       }
     }
   };
-  BSE_EFFECT_INTEGRATE_MODULE (Ladder, Module, LadderProperties);
+  BSE_EFFECT_INTEGRATE_MODULE (LadderFilter, Module, LadderFilterProperties);
 };
 
 BSE_CXX_DEFINE_EXPORTS();
-BSE_CXX_REGISTER_ALL_TYPES_FROM_LADDER_IDL();
+BSE_CXX_REGISTER_ALL_TYPES_FROM_LADDERFILTER_IDL();
 
 }

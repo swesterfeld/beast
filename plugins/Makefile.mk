@@ -32,7 +32,7 @@ plugins/bseplugins.sources = $(strip		\
 	plugins/davbassfilter.cc		\
 	plugins/davchorus.cc			\
 	plugins/davorgan.cc			\
-	plugins/ladder.cc			\
+	plugins/ladderfilter.cc			\
 )
 
 # == bseplugins.so defs ==
@@ -49,7 +49,7 @@ plugins/bseplugins.idlfiles = $(strip		\
 	plugins/davbassfilter.idl		\
 	plugins/davchorus.idl			\
 	plugins/davorgan.idl			\
-	plugins/ladder.idl			\
+	plugins/ladderfilter.idl		\
 	plugins/standardguspatchenvelope.idl	\
 	plugins/standardsaturator.idl		\
 )
