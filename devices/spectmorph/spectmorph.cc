@@ -137,7 +137,7 @@ class SpectMorphDevice : public AudioSignal::Processor {
           case Message::NOTE_ON:
             midi_bytes[0] = 0x90 | ev.channel;
             midi_bytes[1] = ev.key;
-            midi_bytes[2] = ev.velocity;
+            midi_bytes[2] = std::clamp (bse_ftoi (ev.velocity * 127), 0, 127);
             midi_synth->add_midi_event (time_stamp, midi_bytes);
             break;
           // TODO: CC events
