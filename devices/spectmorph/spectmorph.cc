@@ -27,14 +27,42 @@ class SpectMorphDevice : public AudioSignal::Processor {
   SpectMorph::MorphPlanWindow *window_ = nullptr;
   std::thread ui_thread_;
   std::atomic<bool> ui_quit_;
+  std::atomic<bool> show_ui_;
 
-  static constexpr const int PID_CC_OFFSET = 1000;
+  static constexpr const int PID_EDIT = 1;
 
   void
-  idle()
+  edit_open() // TODO: should override function from base class
   {
+    window_ = new SpectMorph::MorphPlanWindow (event_loop_, "SpectMorph BEAST", /* win_id */ 0, false, project_.morph_plan());
+    window_->set_close_callback ([&]() { set_param (PID_EDIT, 0); });
+    window_->show();
+  }
+
+  void
+  edit_idle() // TODO: should override function from base class
+  {
+    event_loop_.process_events();
+  }
+
+  void
+  edit_close() // TODO: should override function from base class
+  {
+    delete window_;
+    window_ = nullptr;
+  }
+
+  void // TODO: should be implemented elsewhere
+  update_ui()
+  {
+    if (show_ui_ && !window_)
+      edit_open();
+
+    if (!show_ui_ && window_)
+      edit_close();
+
     if (window_)
-      event_loop_.process_events();
+      edit_idle();
   }
   void
   initialize () override
@@ -45,21 +73,14 @@ class SpectMorphDevice : public AudioSignal::Processor {
         while (!ui_quit_) // TODO: cleanup thread somewhere: { ui_quit_ = true; ui_thread_.join(); }
           {
             usleep (1000 * 1000 / 60); // 60 fps
-            idle();
+            update_ui();
           }
       });
 
     project_.set_mix_freq (sample_rate());
-    window_ = new SpectMorph::MorphPlanWindow (event_loop_, "SpectMorph BEAST", /* win_id */ 0, false, project_.morph_plan());
-    window_->show();
 
-    /*
-    for (const auto& cc_info : ccs)
-      {
-        Id32 pid = cc_info.cc() + PID_CC_OFFSET;
-        add_param (pid, cc_info.label(), cc_info.label(), 0, 100, cc_info.default_value() / 127. * 100, "%");
-      }
-      */
+    start_param_group ("User Interface");
+    add_param (PID_EDIT, "Show Editor",  "Edit", false);
   }
   void
   query_info (ProcessorInfo &info) const override
@@ -87,14 +108,11 @@ class SpectMorphDevice : public AudioSignal::Processor {
   void
   adjust_param (Id32 tag) override
   {
-    /*
-    if (tag >= PID_CC_OFFSET)
+    switch (tag)
       {
-        const int cc = tag - PID_CC_OFFSET;
-        const int cc_value = std::clamp (bse_ftoi (get_param (tag) * 0.01 * 127), 0, 127);
-        synth_.add_event_cc (0, 0, cc, cc_value);
+        case PID_EDIT: show_ui_ = get_param (tag);
+                       break;
       }
-      */
   }
   void
   render (uint n_frames) override
