@@ -10,6 +10,8 @@ namespace Bse {
 
 using namespace AudioSignal;
 
+namespace {
+
 class PluginInitializer
 {
 public:
@@ -17,7 +19,17 @@ public:
   ~PluginInitializer() { SpectMorph::sm_plugin_cleanup(); }
 };
 
+}
+
 // == SpectMorph ==
+//
+// UI
+//  - edit idle/open/close should be done by Processor
+//  - X11 embedding
+// SERIALIZATION
+//  - save morph plan
+// DATA
+//  - set pkg data dir
 class SpectMorphDevice : public AudioSignal::Processor {
   PluginInitializer plugin_initializer_;
   OBusId stereo_out_;
@@ -37,6 +49,7 @@ class SpectMorphDevice : public AudioSignal::Processor {
     PID_EDIT      = 99 // ui visible - should ultimately be removed
   };
 
+public:
   void
   edit_open() // TODO: should override function from base class
   {
@@ -76,7 +89,7 @@ class SpectMorphDevice : public AudioSignal::Processor {
     ui_quit_ = false;
     ui_thread_ = std::thread ([this]()
       {
-        while (!ui_quit_) // TODO: cleanup thread somewhere: { ui_quit_ = true; ui_thread_.join(); }
+        while (!ui_quit_)
           {
             usleep (1000 * 1000 / 60); // 60 fps
             update_ui();
@@ -93,6 +106,16 @@ class SpectMorphDevice : public AudioSignal::Processor {
 
     start_param_group ("User Interface");
     add_param (PID_EDIT, "Show Editor",  "Edit", false);
+  }
+  ~SpectMorphDevice()
+  {
+    if (ui_thread_.joinable())
+      {
+        ui_quit_ = true;
+        ui_thread_.join();
+      }
+    if (window_)
+      edit_close();
   }
   void
   query_info (ProcessorInfo &info) const override
