@@ -29,7 +29,13 @@ class SpectMorphDevice : public AudioSignal::Processor {
   std::atomic<bool> ui_quit_;
   std::atomic<bool> show_ui_;
 
-  static constexpr const int PID_EDIT = 1;
+  enum Params {
+    PID_CONTROL_1 = 1,
+    PID_CONTROL_2,
+    PID_CONTROL_3,
+    PID_CONTROL_4,
+    PID_EDIT      = 99 // ui visible - should ultimately be removed
+  };
 
   void
   edit_open() // TODO: should override function from base class
@@ -79,6 +85,12 @@ class SpectMorphDevice : public AudioSignal::Processor {
 
     project_.set_mix_freq (sample_rate());
 
+    start_param_group ("Control Signals");
+    add_param (PID_CONTROL_1, "Control Signal #1",  "Control #1", -1, 1, 0);
+    add_param (PID_CONTROL_2, "Control Signal #2",  "Control #2", -1, 1, 0);
+    add_param (PID_CONTROL_3, "Control Signal #3",  "Control #3", -1, 1, 0);
+    add_param (PID_CONTROL_4, "Control Signal #4",  "Control #4", -1, 1, 0);
+
     start_param_group ("User Interface");
     add_param (PID_EDIT, "Show Editor",  "Edit", false);
   }
@@ -108,10 +120,19 @@ class SpectMorphDevice : public AudioSignal::Processor {
   void
   adjust_param (Id32 tag) override
   {
+    SpectMorph::MidiSynth *midi_synth = project_.midi_synth();
     switch (tag)
       {
-        case PID_EDIT: show_ui_ = get_param (tag);
-                       break;
+        case PID_CONTROL_1: midi_synth->set_control_input (0, get_param (tag));
+                            break;
+        case PID_CONTROL_2: midi_synth->set_control_input (1, get_param (tag));
+                            break;
+        case PID_CONTROL_3: midi_synth->set_control_input (2, get_param (tag));
+                            break;
+        case PID_CONTROL_4: midi_synth->set_control_input (3, get_param (tag));
+                            break;
+        case PID_EDIT:      show_ui_ = get_param (tag);
+                            break;
       }
   }
   void
